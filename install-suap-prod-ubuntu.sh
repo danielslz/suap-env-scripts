@@ -104,25 +104,37 @@ case $supervisor_choice in
 		;;
 	2)
 		echo "${GREEN}>>> Configurando supervisor para Celery ${NO_COLOR}"
-		if [ -f "$INSTALL_SCRIPT_DIR/supervisor/celery.conf" ]; then
-			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/celery.conf" /etc/supervisor/conf.d/celery.conf
-			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/run_celery.sh" "$BASE_DIR/scripts/run_celery.sh"
-			sudo chmod +x "$BASE_DIR/scripts/run_celery.sh"
+		if [ -f "$INSTALL_SCRIPT_DIR/supervisor/celery_worker.conf" ]; then
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/celery_worker.conf" /etc/supervisor/conf.d/celery_worker.conf
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/run_celery_worker.sh" "$BASE_DIR/scripts/run_celery_worker.sh"
+			sudo chmod +x "$BASE_DIR/scripts/run_celery_worker.sh"
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/celery_beat.conf" /etc/supervisor/conf.d/celery_beat.conf
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/run_celery_beat.sh" "$BASE_DIR/scripts/run_celery_beat.sh"
+			sudo chmod +x "$BASE_DIR/scripts/run_celery_beat.sh"
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/celery_flower.conf" /etc/supervisor/conf.d/celery_flower.conf
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/run_celery_flower.sh" "$BASE_DIR/scripts/run_celery_flower.sh"
+			sudo chmod +x "$BASE_DIR/scripts/run_celery_flower.sh"
 			echo "${GREEN}✓ Celery configurado${NO_COLOR}"
 		else
-			echo "Erro: arquivo supervisor/celery.conf não encontrado em $INSTALL_SCRIPT_DIR"
+			echo "Erro: arquivo supervisor/celery_worker.conf não encontrado em $INSTALL_SCRIPT_DIR"
 			exit 1
 		fi
 		;;
 	3)
 		echo "${GREEN}>>> Configurando supervisor para SUAP e Celery ${NO_COLOR}"
-		if [ -f "$INSTALL_SCRIPT_DIR/supervisor/suap.conf" ] && [ -f "$INSTALL_SCRIPT_DIR/supervisor/celery.conf" ]; then
+		if [ -f "$INSTALL_SCRIPT_DIR/supervisor/suap.conf" ] && [ -f "$INSTALL_SCRIPT_DIR/supervisor/celery_worker.conf" ]; then
 			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/suap.conf" /etc/supervisor/conf.d/suap.conf
 			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/run_suap.sh" "$BASE_DIR/scripts/run_suap.sh"
 			sudo chmod +x "$BASE_DIR/scripts/run_suap.sh"
-			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/celery.conf" /etc/supervisor/conf.d/celery.conf
-			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/run_celery.sh" "$BASE_DIR/scripts/run_celery.sh"
-			sudo chmod +x "$BASE_DIR/scripts/run_celery.sh"
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/celery_worker.conf" /etc/supervisor/conf.d/celery_worker.conf
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/run_celery_worker.sh" "$BASE_DIR/scripts/run_celery_worker.sh"
+			sudo chmod +x "$BASE_DIR/scripts/run_celery_worker.sh"
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/celery_beat.conf" /etc/supervisor/conf.d/celery_beat.conf
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/run_celery_beat.sh" "$BASE_DIR/scripts/run_celery_beat.sh"
+			sudo chmod +x "$BASE_DIR/scripts/run_celery_beat.sh"
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/celery_flower.conf" /etc/supervisor/conf.d/celery_flower.conf
+			sudo cp "$INSTALL_SCRIPT_DIR/supervisor/run_celery_flower.sh" "$BASE_DIR/scripts/run_celery_flower.sh"
+			sudo chmod +x "$BASE_DIR/scripts/run_celery_flower.sh"
 			echo "${GREEN}✓ SUAP e Celery configurados${NO_COLOR}"
 		else
 			echo "Erro: um ou mais arquivos de configuração não foram encontrados em $INSTALL_SCRIPT_DIR/supervisor"
@@ -152,9 +164,19 @@ case $supervisor_choice in
 		echo "4. Para rodar o SUAP: ${GREEN}sudo supervisorctl start suap${NO_COLOR}"
 		;;
 	2)
-		echo "4. Para rodar o Celery: ${GREEN}sudo supervisorctl start celery${NO_COLOR}"
+		echo "4. Para rodar todos os serviços Celery:"
+		echo "   - Worker: ${GREEN}sudo supervisorctl start celery-worker${NO_COLOR}"
+		echo "   - Beat: ${GREEN}sudo supervisorctl start celery-beat${NO_COLOR}"
+		echo "   - Flower: ${GREEN}sudo supervisorctl start celery-flower${NO_COLOR}"
+		echo "   - Todos: ${GREEN}sudo supervisorctl start celery-worker celery-beat celery-flower${NO_COLOR}"
 		;;
 	3)
-		echo "4. Para rodar SUAP e Celery: ${GREEN}sudo supervisorctl start all${NO_COLOR}"
+		echo "4. Para rodar SUAP e todos os serviços Celery:"
+		echo "   - SUAP: ${GREEN}sudo supervisorctl start suap${NO_COLOR}"
+		echo "   - Celery Worker: ${GREEN}sudo supervisorctl start celery-worker${NO_COLOR}"
+		echo "   - Celery Beat: ${GREEN}sudo supervisorctl start celery-beat${NO_COLOR}"
+		echo "   - Celery Flower: ${GREEN}sudo supervisorctl start celery-flower${NO_COLOR}"
+		echo "   - Todos: ${GREEN}sudo supervisorctl start all${NO_COLOR}"
 		;;
 esac
+
