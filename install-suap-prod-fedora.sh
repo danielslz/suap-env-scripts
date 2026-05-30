@@ -11,15 +11,16 @@ NO_COLOR=`tput sgr0`
 
 # instalar dependencias do sistema
 echo "${GREEN} >>> Instalando as dependências do sistema operacional ${NO_COLOR}"
-sudo dnf install -y @development-tools make \
-        git openldap-devel cyrus-sasl-devel libpq-devel ghostscript \
-        libjpeg-turbo-devel freetype-devel zlib-devel glibc-langpack-pt \
-        freetds-devel xmlsec1-devel libxml2-devel libxslt-devel \
-        blas-devel lapack-devel atlas-devel gcc-gfortran \
-        mesa-libGLU cairo cairo-devel cups-libs dbus-glib libXinerama libSM \
-        tmpreaper gdk-pixbuf2 libffi-devel shared-mime-types \
-        python3-cffi pango pango-devel \
-        swig openssl curl qpdf wkhtmltopdf poppler-utils mupdf
+BASE="glibc-langpack-pt_BR vim git openssl curl postgresql-devel tmpwatch swig cronie chrony"
+LDAP="openldap-devel cyrus-sasl-devel"
+PILLOW="libjpeg-turbo-devel freetype-devel zlib-devel"
+PYMSSQL="freetds-devel"
+LXML="xmlsec1-devel libxml2-devel libxslt-devel"
+WEASYPRINT="pango harfbuzz"
+MAGIC="file-libs"
+PDF="qpdf ghostscript poppler-utils mupdf-tools wkhtmltopdf"
+sudo dnf -y install $BASE $LDAP $PILLOW $PYMSSQL $LXML $WEASYPRINT $MAGIC $PDF
+sudo localectl set-locale LANG=pt_BR.UTF-8
 sudo timedatectl set-timezone America/Fortaleza
 
 # instalar uv
@@ -39,7 +40,7 @@ fi
 
 # baixar codigo do suap
 echo "${GREEN} >>> Baixando código SUAP ${NO_COLOR}"
-mkdir $BASE_DIR
+mkdir -p $BASE_DIR
 cd $BASE_DIR
 if [ -d $SUAP_DIR/.git ]; then
 	cd $SUAP_DIR
@@ -71,6 +72,7 @@ cd $SUAP_DIR
 uv sync --group prod
 
 # mensagem final
-echo "${GREEN} SUAP instalado com sucesso! ${NO_COLOR}"
+echo "${GREEN} SUAP instalado com sucesso em $SUAP_DIR! ${NO_COLOR}"
 echo "Para configurar as variáveis de ambiente, edite o arquivo ${GREEN}$SUAP_DIR/suap/.env ${NO_COLOR}"
-echo "Para rodar o servidor de desenvolvimento, rode: ${GREEN}uv run -- suap runserver 0.0.0.0:8000${NO_COLOR}"
+echo "Para recarregar as configurações neste terminal, rode: ${GREEN}source $HOME/.bashrc${NO_COLOR}"
+echo "Para rodar o servidor de desenvolvimento, rode: ${GREEN}uv python manage.py runserver 0.0.0.0:8000${NO_COLOR}"

@@ -41,7 +41,7 @@ fi
 
 # baixar codigo do suap
 echo "${GREEN} >>> Baixando código SUAP ${NO_COLOR}"
-mkdir $BASE_DIR
+mkdir -p $BASE_DIR
 cd $BASE_DIR
 if [ -d $SUAP_DIR/.git ]; then
 	cd $SUAP_DIR
