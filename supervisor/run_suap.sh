@@ -26,9 +26,9 @@ export UV_PROJECT_ENVIRONMENT=$VENV_DIR
 
 # execucao do script
 echo "${GREEN}### Iniciando Gunicorn${NO_COLOR}"
-source $VENV_DIR/bin/activate
+#source $VENV_DIR/bin/activate
 cd $SUAP_DIR
-exec gunicorn suap.wsgi:application -w $NUM_WORKERS --threads $NUM_THREADS -b :8000 \
+uv run gunicorn suap.wsgi:application -w $NUM_WORKERS --threads $NUM_THREADS -b :8000 \
   --user=$USER --group=$GROUP --log-level=info \
   --max-requests=2000 --max-requests-jitter=100 \
   --log-file=$LOG_FILE 2>>$LOG_FILE \
