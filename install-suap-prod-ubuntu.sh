@@ -47,7 +47,8 @@ chown -R www-data:www-data $VENV_DIR
 
 if ! [ -x "$(command -v uv)" ]; then
 	echo "${GREEN}>>> Instalando o uv ${NO_COLOR}"
-	curl -LsSf https://astral.sh/uv/install.sh | sh
+	curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh
+
 	# adiciona variaveis ao bashrc
 	echo 'eval "$(uv generate-shell-completion bash)"' >> $HOME/.bashrc
 	# carrega novos valores bashrc
