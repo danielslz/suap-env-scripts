@@ -39,6 +39,7 @@ export UV_CACHE_DIR=$VENV_DIR/.cache/uv
 export UV_PYTHON_INSTALL_DIR=$VENV_DIR/.local/share/uv/python
 export UV_PROJECT_ENVIRONMENT=$VENV_DIR
 
+mkdir -p $BASE_DIR
 mkdir -p $VENV_DIR
 mkdir -p $VENV_DIR/.cache/uv
 mkdir -p $VENV_DIR/.local/share/uv/python
@@ -60,7 +61,6 @@ fi
 
 # baixar codigo do suap
 echo "${GREEN}>>> Baixando código SUAP ${NO_COLOR}"
-mkdir -p $BASE_DIR
 cd $BASE_DIR
 if [ -d $SUAP_DIR/.git ]; then
 	cd $SUAP_DIR
