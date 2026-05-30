@@ -73,6 +73,7 @@ uv sync --group prod
 
 # mensagem final
 echo "${GREEN}SUAP instalado com sucesso em $SUAP_DIR! ${NO_COLOR}"
-echo "Para configurar as variáveis de ambiente, edite o arquivo ${GREEN}$SUAP_DIR/suap/.env ${NO_COLOR}"
 echo "Para recarregar as configurações neste terminal, rode: ${GREEN}source $HOME/.bashrc${NO_COLOR}"
-echo "Para rodar o servidor de desenvolvimento, rode: ${GREEN}uv python manage.py runserver 0.0.0.0:8000${NO_COLOR}"
+echo "Para configurar as variáveis de ambiente, edite o arquivo ${GREEN}$SUAP_DIR/suap/.env ${NO_COLOR}"
+echo "Para ir para a pasta do SUAP, rode: ${GREEN}cd $SUAP_DIR${NO_COLOR}"
+echo "Para rodar o servidor de desenvolvimento, rode: ${GREEN}uv run python manage.py runserver 0.0.0.0:8000${NO_COLOR}"
