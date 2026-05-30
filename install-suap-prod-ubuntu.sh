@@ -21,12 +21,23 @@ LXML="libxmlsec1-dev libxml2-dev libxslt1-dev"
 WEASYPRINT="libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0"
 MAGIC="libmagic1"
 PDF="qpdf ghostscript poppler-utils mupdf-tools wkhtmltopdf"
-sudo apt update -qy; \
+sudo apt update -qy
 sudo apt install -y --fix-missing $BASE $LDAP $PILLOW $PYMSSQL $LXML $WEASYPRINT $MAGIC $PDF
 sudo update-locale LANG=pt_BR.UTF-8
 sudo timedatectl set-timezone America/Fortaleza
 
 # instalar uv
+UV_PYTHON_DOWNLOADS=never
+UV_COMPILE_BYTECODE=1
+UV_LINK_MODE=copy
+UV_CACHE_DIR=/var/www/.cache/uv
+UV_PYTHON_INSTALL_DIR=/var/www/.local/share/uv/python
+UV_PROJECT_ENVIRONMENT=/var/www/.venv
+
+sudo mkdir -p /var/www/
+sudo mkdir -p /var/www/.cache/uv /var/www/.local/share/uv/python /var/www/.venv
+sudo chown -R www-data:www-data /var/www/.cache /var/www/.local /var/www/.venv
+
 if ! [ -x "$(command -v uv)" ]; then
 	echo "${GREEN}>>> Instalando o uv ${NO_COLOR}"
 	curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -43,22 +54,22 @@ fi
 
 # baixar codigo do suap
 echo "${GREEN}>>> Baixando código SUAP ${NO_COLOR}"
-mkdir -p $BASE_DIR
+sudo mkdir -p $BASE_DIR
 cd $BASE_DIR
 if [ -d $SUAP_DIR/.git ]; then
 	cd $SUAP_DIR
-	git checkout master
-	git pull
+	sudo git checkout master
+	sudo git pull
 else
-	git clone --depth 1 $GIT_URL
+	sudo git clone --depth 1 $GIT_URL
 	cd $SUAP_DIR
 fi
 
 # gerar settings.py
-cp $SUAP_DIR/suap/settings_sample.py $SUAP_DIR/suap/settings.py
+sudo cp $SUAP_DIR/suap/settings_sample.py $SUAP_DIR/suap/settings.py
 
 # gerar .env
-cp $SUAP_DIR/.env.dev.sample $SUAP_DIR/.env
+sudo cp $SUAP_DIR/.env.dev.sample $SUAP_DIR/.env
 
 # instalar python
 echo "${GREEN}>>> Instalando Python ${NO_COLOR}" $PYTHON_VERSION
@@ -72,7 +83,10 @@ uv venv --python $PYTHON_VERSION
 # instalar dependencias
 echo "${GREEN}>>> Instalando libs SUAP ${NO_COLOR}"
 cd $SUAP_DIR
-uv sync --group prod
+uv sync --group prod --no-dev --no-install-project
+
+# corrigir permissoes arquivos
+sudo chown -R www-data:www-data $SUAP_DIR
 
 # configurar supervisor
 echo "${GREEN}>>> Configurando o Supervisor ${NO_COLOR}"

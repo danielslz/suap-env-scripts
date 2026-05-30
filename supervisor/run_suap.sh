@@ -1,6 +1,11 @@
 #!/bin/bash
 
-### definicao de variaveis
+# configuracoes para uv
+export UV_CACHE_DIR=/var/www/.cache/uv
+export UV_PYTHON_INSTALL_DIR=/var/www/.local/share/uv/python
+export UV_PROJECT_ENVIRONMENT=/var/www/.venv
+
+# definicao de variaveis
 BASE_DIR=/opt
 SUAP_DIR=$BASE_DIR/suap
 VENV_DIR=$BASE_DIR/venv/suap
@@ -16,6 +21,7 @@ GROUP=www-data
 GREEN=`tput setaf 2`
 NO_COLOR=`tput sgr0`
 
+# execucao do script
 echo "${GREEN}### Iniciando Gunicorn${NO_COLOR}"
 source $VENV_DIR/bin/activate
 cd $SUAP_DIR
