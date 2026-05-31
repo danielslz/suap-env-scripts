@@ -22,13 +22,13 @@ export UV_COMPILE_BYTECODE=1
 export UV_LINK_MODE=copy
 export UV_CACHE_DIR=$VENV_DIR/.cache/uv
 export UV_PYTHON_INSTALL_DIR=$VENV_DIR/.local/share/uv/python
-export UV_PROJECT_ENVIRONMENT=$VENV_DIR/suap
+export UV_PROJECT_ENVIRONMENT=$VENV_DIR
 
 # execucao do script
 echo "${GREEN}### Iniciando Gunicorn${NO_COLOR}"
-#source $VENV_DIR/bin/activate
+source $SUAP_DIR/.venv/bin/activate
 cd $SUAP_DIR
-uv run gunicorn suap.wsgi:application -w $NUM_WORKERS --threads $NUM_THREADS -b :8000 \
+exec gunicorn suap.wsgi:application -w $NUM_WORKERS --threads $NUM_THREADS -b :8000 \
   --user=$USER --group=$GROUP --log-level=info \
   --max-requests=2000 --max-requests-jitter=100 \
   --log-file=$LOG_FILE 2>>$LOG_FILE \

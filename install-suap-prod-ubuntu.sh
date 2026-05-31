@@ -37,7 +37,7 @@ export UV_COMPILE_BYTECODE=1
 export UV_LINK_MODE=copy
 export UV_CACHE_DIR=$VENV_DIR/.cache/uv
 export UV_PYTHON_INSTALL_DIR=$VENV_DIR/.local/share/uv/python
-export UV_PROJECT_ENVIRONMENT=$VENV_DIR/suap
+export UV_PROJECT_ENVIRONMENT=$VENV_DIR
 
 mkdir -p $BASE_DIR
 mkdir -p $VENV_DIR
@@ -51,6 +51,12 @@ if ! [ -x "$(command -v uv)" ]; then
 
 	# adiciona variaveis ao bashrc
 	echo 'eval "$(uv generate-shell-completion bash)"' >> $HOME/.bashrc
+	echo 'export UV_PYTHON_DOWNLOADS=manual' >> $HOME/.bashrc
+	echo 'export UV_COMPILE_BYTECODE=1' >> $HOME/.bashrc
+	echo 'export UV_LINK_MODE=copy' >> $HOME/.bashrc
+	echo 'export UV_CACHE_DIR=$VENV_DIR/.cache/uv' >> $HOME/.bashrc
+	echo 'export UV_PYTHON_INSTALL_DIR=$VENV_DIR/.local/share/uv/python' >> $HOME/.bashrc
+	echo 'export UV_PROJECT_ENVIRONMENT=$VENV_DIR' >> $HOME/.bashrc
 	# carrega novos valores bashrc
 	source $HOME/.bashrc
 	# testa se tem uv no path, caso contrario exporta agora
