@@ -20,7 +20,8 @@ LXML="libxmlsec1-dev libxml2-dev libxslt1-dev"
 WEASYPRINT="libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0"
 MAGIC="libmagic1"
 PDF="qpdf ghostscript poppler-utils mupdf-tools wkhtmltopdf"
-sudo apt update -qy; \
+sudo apt update -qy
+sudo apt upgrade -y
 sudo apt install -y --fix-missing $BASE $LDAP $PILLOW $PYMSSQL $LXML $WEASYPRINT $MAGIC $PDF
 sudo update-locale LANG=pt_BR.UTF-8
 sudo timedatectl set-timezone America/Fortaleza

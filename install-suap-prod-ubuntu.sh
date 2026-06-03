@@ -19,6 +19,7 @@ NO_COLOR=`tput sgr0`
 # instalar dependencias do sistema
 echo "${GREEN}>>> Instalando as dependências do sistema operacional ${NO_COLOR}"
 BASE="locales vim git build-essential language-pack-pt cron ntpdate supervisor openssl curl libpq-dev tmpreaper swig"
+PYTHON="python3-dev python3-venv python3-pip"
 LDAP="libldap2-dev libsasl2-dev"
 PILLOW="libjpeg-dev libfreetype6-dev zlib1g-dev"
 PYMSSQL="freetds-dev"
@@ -27,44 +28,10 @@ WEASYPRINT="libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0"
 MAGIC="libmagic1"
 PDF="qpdf ghostscript poppler-utils mupdf-tools wkhtmltopdf"
 apt update -qy
-apt install -y --fix-missing $BASE $LDAP $PILLOW $PYMSSQL $LXML $WEASYPRINT $MAGIC $PDF
+apt upgrade -y
+apt install -y --fix-missing $BASE $PYTHON $LDAP $PILLOW $PYMSSQL $LXML $WEASYPRINT $MAGIC $PDF
 update-locale LANG=pt_BR.UTF-8
 timedatectl set-timezone America/Fortaleza
-
-# instalar uv
-export UV_PYTHON_DOWNLOADS=manual
-export UV_COMPILE_BYTECODE=1
-export UV_LINK_MODE=copy
-export UV_CACHE_DIR=$VENV_DIR/.cache/uv
-export UV_PYTHON_INSTALL_DIR=$VENV_DIR/.local/share/uv/python
-export UV_PROJECT_ENVIRONMENT=$VENV_DIR
-
-mkdir -p $BASE_DIR
-mkdir -p $VENV_DIR
-mkdir -p $VENV_DIR/.cache/uv
-mkdir -p $VENV_DIR/.local/share/uv/python
-chown -R www-data:www-data $VENV_DIR
-
-if ! [ -x "$(command -v uv)" ]; then
-	echo "${GREEN}>>> Instalando o uv ${NO_COLOR}"
-	curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh
-
-	# adiciona variaveis ao bashrc
-	echo 'eval "$(uv generate-shell-completion bash)"' >> $HOME/.bashrc
-	echo 'export UV_PYTHON_DOWNLOADS=manual' >> $HOME/.bashrc
-	echo 'export UV_COMPILE_BYTECODE=1' >> $HOME/.bashrc
-	echo 'export UV_LINK_MODE=copy' >> $HOME/.bashrc
-	echo 'export UV_CACHE_DIR=$VENV_DIR/.cache/uv' >> $HOME/.bashrc
-	echo 'export UV_PYTHON_INSTALL_DIR=$VENV_DIR/.local/share/uv/python' >> $HOME/.bashrc
-	echo 'export UV_PROJECT_ENVIRONMENT=$VENV_DIR' >> $HOME/.bashrc
-	# carrega novos valores bashrc
-	source $HOME/.bashrc
-	# testa se tem uv no path, caso contrario exporta agora
-	if ! [ -x "$(command -v uv)" ]; then
-		source $HOME/.local/bin/env
-		eval "$(uv generate-shell-completion bash)"
-	fi
-fi
 
 # baixar codigo do suap
 echo "${GREEN}>>> Baixando código SUAP ${NO_COLOR}"
@@ -84,19 +51,16 @@ cp $SUAP_DIR/suap/settings_sample.py $SUAP_DIR/suap/settings.py
 # gerar .env
 cp $SUAP_DIR/.env.dev.sample $SUAP_DIR/.env
 
-# instalar python
-echo "${GREEN}>>> Instalando Python ${NO_COLOR}" $PYTHON_VERSION
-uv python install $PYTHON_VERSION
-
 # criar virtualenv
 echo "${GREEN}>>> Criando virtualenv ${NO_COLOR}$VENV_DIR"
-cd $SUAP_DIR
-uv venv --python $PYTHON_VERSION
+mkdir -p $VENV_DIR
+python3 -m venv $VENV_DIR/suap
 
 # instalar dependencias
 echo "${GREEN}>>> Instalando libs SUAP ${NO_COLOR}"
 cd $SUAP_DIR
-uv sync --group prod --no-dev --no-install-project
+source $VENV_DIR/suap/bin/activate
+pip install . --group prod
 
 # configurar supervisor
 echo "${GREEN}>>> Configurando o Supervisor ${NO_COLOR}"
