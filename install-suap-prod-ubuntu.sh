@@ -61,7 +61,7 @@ echo "${GREEN}>>> Instalando libs SUAP ${NO_COLOR}"
 cd $SUAP_DIR
 source $VENV_DIR/suap/bin/activate
 pip install --upgrade pip
-pip install . --group prod
+pip install . --group prod --no-cache-dir
 
 # configurar supervisor
 echo "${GREEN}>>> Configurando o Supervisor ${NO_COLOR}"
