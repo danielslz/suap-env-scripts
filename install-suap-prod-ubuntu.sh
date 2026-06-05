@@ -62,6 +62,7 @@ cd $SUAP_DIR
 source $VENV_DIR/suap/bin/activate
 pip install --upgrade pip
 pip install . --group prod --no-cache-dir
+pip install "setuptools<82.0.0"
 
 # configurar supervisor
 echo "${GREEN}>>> Configurando o Supervisor ${NO_COLOR}"
@@ -142,7 +143,7 @@ supervisorctl update
 # corrigir permissoes arquivos
 chown -R www-data:www-data $SUAP_DIR
 chown -R www-data:www-data $BASE_DIR/logs
-chown -R www-data:www-data $VENV_DIR/.local/share/uv
+chown -R www-data:www-data $VENV_DIR/suap
 
 # mensagem final
 echo ""
