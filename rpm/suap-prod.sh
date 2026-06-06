@@ -21,7 +21,7 @@ fi
 # instalar dependencias do sistema
 echo "${GREEN}>>> Verificando dependências do sistema operacional ${NO_COLOR}"
 BASE="glibc-langpack-pt_BR vim git openssl supervisor curl postgresql-devel tmpwatch swig cronie chrony gcc gcc-c++"
-PYTHON="python3-devel python3-virtualenv python3-pip"
+PYTHON="python3-devel python3-virtualenv python3-pip python3.12-devel"
 LDAP="openldap-devel cyrus-sasl-devel"
 PILLOW="libjpeg-turbo-devel freetype-devel zlib-devel"
 PYMSSQL="freetds-devel"
@@ -97,7 +97,7 @@ fi
 if [ ! -d "$VENV_DIR/suap" ]; then
     echo "${GREEN}>>> Criando virtualenv ${NO_COLOR}$VENV_DIR"
     mkdir -p "$VENV_DIR"
-    python3 -m venv "$VENV_DIR/suap"
+    python3.12 -m venv "$VENV_DIR/suap"
 else
     echo "${YELLOW}>>> Virtualenv já foi criado ${NO_COLOR}"
 fi
