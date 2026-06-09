@@ -181,4 +181,4 @@ sudo supervisorctl tail celery-worker
 
 ## Suporte
 
-Para dúvidas ou sugestões, procure a equipe NDSIS ou utilize o repositório SUAP no GitLab.
+Para dúvidas ou sugestões, abra uma issue neste repositório.
