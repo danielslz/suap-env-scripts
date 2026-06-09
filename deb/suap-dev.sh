@@ -133,7 +133,14 @@ fi
 # instalar dependencias
 echo "${GREEN}>>> Instalando/atualizando libs SUAP ${NO_COLOR}"
 cd $SUAP_DIR
-uv sync --group dev
+if [ -f "$SUAP_DIR/pyproject.toml" ]; then
+	uv sync --group dev
+elif [ -d "$SUAP_DIR/requirements" ]; then
+	uv pip install -r requirements/development.txt
+else
+	echo "Erro: não foi encontrado o pyproject.toml nem a pasta requirements em $SUAP_DIR"
+	exit 1
+fi
 
 # mensagem final
 echo "${GREEN}SUAP instalado/atualizado com sucesso em $SUAP_DIR! ${NO_COLOR}"

@@ -123,7 +123,14 @@ echo "${GREEN}>>> Instalando/atualizando libs SUAP ${NO_COLOR}"
 cd $SUAP_DIR
 source $VENV_DIR/suap/bin/activate
 pip install --upgrade pip
-pip install . --group prod --no-cache-dir
+if [ -f "$SUAP_DIR/pyproject.toml" ]; then
+	pip install . --group prod --no-cache-dir
+elif [ -d "$SUAP_DIR/requirements" ]; then
+	pip install -r requirements/production.txt --no-cache-dir
+else
+	echo "Erro: não foi encontrado o pyproject.toml nem a pasta requirements em $SUAP_DIR"
+	exit 1
+fi
 pip install "setuptools<82.0.0"
 
 # configurar supervisor
