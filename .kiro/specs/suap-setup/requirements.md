@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Este documento define os requisitos para o projeto **suap-env-scripts**, uma coleção de scripts shell que automatizam a configuração do ambiente da aplicação SUAP em sistemas Linux. Os scripts suportam distribuições Debian-like (Debian/Ubuntu) e RPM-like (Fedora/RHEL/CentOS), cobrindo ambientes de desenvolvimento, produção, instalação de serviços de infraestrutura (Redis e Nginx) e ambientes containerizados com Docker.
+Este documento define os requisitos para o projeto **suap-setup**, uma coleção de scripts shell que automatizam a configuração do ambiente da aplicação SUAP em sistemas Linux. Os scripts suportam distribuições Debian-like (Debian/Ubuntu) e RPM-like (Fedora/RHEL/CentOS), cobrindo ambientes de desenvolvimento, produção, instalação de serviços de infraestrutura (Redis e Nginx) e ambientes containerizados com Docker.
 
 ## Glossary
 
@@ -18,8 +18,8 @@ Este documento define os requisitos para o projeto **suap-env-scripts**, uma col
 - **UV**: Gerenciador de pacotes Python moderno (astral.sh/uv) utilizado no ambiente de desenvolvimento.
 - **Supervisor**: Sistema de controle de processos utilizado para gerenciar serviços SUAP em produção.
 - **Virtualenv**: Ambiente virtual Python isolado para dependências do projeto.
-- **Arquivo_Env**: Arquivo `.env` na raiz do projeto suap-env-scripts que armazena variáveis de configuração compartilhadas entre todos os scripts (GIT_URL, PYTHON_VERSION, BASE_DIR, SUAP_DIR, VENV_DIR, etc.).
-- **Arquivo_Env_Central**: Arquivo centralizado de configuração (`.env`) na raiz do repositório suap-env-scripts que contém todas as variáveis reutilizáveis entre os scripts.
+- **Arquivo_Env**: Arquivo `.env` na raiz do projeto suap-setup que armazena variáveis de configuração compartilhadas entre todos os scripts (GIT_URL, PYTHON_VERSION, BASE_DIR, SUAP_DIR, VENV_DIR, etc.).
+- **Arquivo_Env_Central**: Arquivo centralizado de configuração (`.env`) na raiz do repositório suap-setup que contém todas as variáveis reutilizáveis entre os scripts.
 - **Docker_Compose**: Ferramenta para definir e executar aplicações multi-container Docker usando arquivo `docker-compose.yml`.
 
 ## Requirements

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Este documento descreve o design técnico do projeto **suap-env-scripts**, uma coleção de scripts shell que automatizam a configuração do ambiente da aplicação SUAP em sistemas Linux. O sistema é composto por um wrapper principal (`setup.sh`) que detecta a distribuição, exibe um menu interativo e delega a execução para scripts especializados por família de distribuição (Debian/RPM) e por tipo de ambiente (dev/prod/Docker).
+Este documento descreve o design técnico do projeto **suap-setup**, uma coleção de scripts shell que automatizam a configuração do ambiente da aplicação SUAP em sistemas Linux. O sistema é composto por um wrapper principal (`setup.sh`) que detecta a distribuição, exibe um menu interativo e delega a execução para scripts especializados por família de distribuição (Debian/RPM) e por tipo de ambiente (dev/prod/Docker).
 
 ### Decisões de Design
 
@@ -289,7 +289,7 @@ Os scripts de Redis e Nginx seguem padrão simples:
 
 ```ini
 # =============================================================
-# Configuração centralizada do suap-env-scripts
+# Configuração centralizada do suap-setup
 # Edite este arquivo conforme seu ambiente
 # =============================================================
 
@@ -316,7 +316,7 @@ GIT_URL=
 ### Estrutura de Diretórios do Projeto (após refatoração)
 
 ```
-suap-env-scripts/
+suap-setup/
 ├── .env                          # Variáveis centralizadas
 ├── setup.sh                      # Wrapper principal (renomeado)
 ├── lib/
@@ -587,10 +587,10 @@ Dada a natureza do projeto (scripts shell com efeitos colaterais no sistema oper
 
 - Cada teste de propriedade executa no mínimo **100 iterações** com inputs gerados aleatoriamente
 - Cada teste referencia a propriedade do design via tag:
-  - `# Feature: suap-env-scripts, Property 1: Round-trip do arquivo .env`
-  - `# Feature: suap-env-scripts, Property 2: Classificação de distribuição`
-  - `# Feature: suap-env-scripts, Property 3: Roteamento do menu`
-  - `# Feature: suap-env-scripts, Property 4: Idempotência de execução`
+  - `# Feature: suap-setup, Property 1: Round-trip do arquivo .env`
+  - `# Feature: suap-setup, Property 2: Classificação de distribuição`
+  - `# Feature: suap-setup, Property 3: Roteamento do menu`
+  - `# Feature: suap-setup, Property 4: Idempotência de execução`
 
 ### Estrutura de Testes
 

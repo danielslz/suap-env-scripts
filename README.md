@@ -1,4 +1,4 @@
-# SUAP Env Scripts
+# SUAP Setup
 
 ## Introdução
 
@@ -8,7 +8,7 @@ Os scripts automatizam a instalação de dependências, configuração de ambien
 
 ## Organização do repositório
 
-- `config-env.sh`: wrapper interativo que detecta a família da distribuição e escolhe o script correto.
+- `setup.sh`: wrapper interativo que detecta a família da distribuição e escolhe o script correto.
 - `deb/`: scripts específicos para Debian/Ubuntu.
 - `rpm/`: scripts específicos para Fedora/RHEL/CentOS.
 - `nginx/`: configuração Nginx para SUAP.
@@ -18,7 +18,7 @@ Os scripts automatizam a instalação de dependências, configuração de ambien
 
 | Script | Ambiente | Descrição |
 |--------|----------|-----------|
-| `config-env.sh` | Wrapper | Detecta a distro e executa o script correto para dev/prod, Redis ou Nginx |
+| `setup.sh` | Wrapper | Detecta a distro e executa o script correto para dev/prod, Redis ou Nginx |
 | `deb/suap-dev.sh` | Desenvolvimento | Configura ambiente de desenvolvimento SUAP em Debian/Ubuntu |
 | `rpm/suap-dev.sh` | Desenvolvimento | Configura ambiente de desenvolvimento SUAP em Fedora/RHEL |
 | `deb/suap-prod.sh` | Produção | Configura ambiente de produção SUAP em Debian/Ubuntu |
@@ -32,7 +32,7 @@ Os scripts automatizam a instalação de dependências, configuração de ambien
 
 ### Wrapper cross-distro
 
-`config-env.sh` oferece um menu com as opções:
+`setup.sh` oferece um menu com as opções:
 
 1. Configurar ambiente de desenvolvimento
 2. Configurar ambiente de produção
@@ -85,14 +85,14 @@ Os scripts de infraestrutura instalam e configuram:
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/danielslz/suap-env-scripts.git
-cd suap-env-scripts
+git clone https://github.com/danielslz/suap-setup.git
+cd suap-setup
 ```
 
 ### 2. Executar o wrapper interativo
 
 ```bash
-bash config-env.sh
+bash setup.sh
 ```
 
 ### 3. Executar um script diretamente
@@ -113,7 +113,7 @@ bash rpm/install-nginx.sh
 ## Estrutura do repositório
 
 ```
-config-env.sh
+setup.sh
 
 deb/
   install-redis.sh
@@ -175,7 +175,7 @@ sudo supervisorctl tail celery-worker
 
 ## Observações
 
-- `config-env.sh` facilita a escolha do script certo para a família de distribuição.
+- `setup.sh` facilita a escolha do script certo para a família de distribuição.
 - Os scripts são projetados para serem idempotentes, evitando repetição de etapas quando possível.
 - A configuração de Supervisor e Nginx depende dos arquivos em `supervisor/` e `nginx/`.
 
