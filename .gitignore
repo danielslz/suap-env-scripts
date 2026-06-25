@@ -1,1 +1,35 @@
+# Arquivo de variáveis de ambiente centralizado
 .env
+
+# Editor e IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Dependências de testes (bats)
+tests/test_helper/
+tests/libs/
+node_modules/
+
+# Docker (volumes e dados locais)
+docker/dev/data/
+docker/prod/data/
+
+# Python (caso algum script gere artefatos)
+__pycache__/
+*.pyc
+.venv/
+
+# Arquivos temporários
+*.tmp
+*.bak
