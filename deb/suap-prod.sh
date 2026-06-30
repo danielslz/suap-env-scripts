@@ -22,10 +22,10 @@ load_env_file "${SCRIPT_DIR}/.env"
 
 export DISTRO_TYPE="deb"
 
-# --- 3. Validar execução como root ---
+# --- 3. Elevar para root se necessário ---
 if [ "$EUID" -ne 0 ]; then
-  msg_error "Este script deve ser executado como root. Use sudo ou entre como root."
-  exit 1
+  msg_action "Elevando permissões com sudo..."
+  exec sudo bash "$0" "$@"
 fi
 
 # --- 4. Resolver GIT_URL ---

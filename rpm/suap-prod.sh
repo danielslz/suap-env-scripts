@@ -14,10 +14,10 @@ require_env_file "$ENV_FILE"
 # Carregar variáveis do .env centralizado
 load_env_file "$ENV_FILE"
 
-# Validar execução como root
+# Elevar para root se necessário
 if [ "$EUID" -ne 0 ]; then
-  msg_error "Este script deve ser executado como root. Use sudo ou entre como root."
-  exit 1
+  msg_action "Elevando permissões com sudo..."
+  exec sudo bash "$0" "$@"
 fi
 
 # Garantir GIT_URL disponível
