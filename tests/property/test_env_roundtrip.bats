@@ -181,3 +181,150 @@ random_value() {
         unset "$base_key" "$derived_key"
     done
 }
+
+# --- Property 7: Fallback de .env em scripts individuais ---
+# Feature: suap-setup, Property 7: Fallback de .env em scripts individuais
+#
+# Para qualquer script individual (Script_Dev, Script_Prod, Script_Docker_Dev,
+# Script_Docker_Prod), quando executado diretamente em um ambiente onde o
+# Arquivo_Env_Central não existe, o script deve encerrar com código de saída 1
+# sem realizar nenhuma operação de instalação ou configuração.
+#
+# **Validates: Requirements 1.7**
+
+@test "Property 7.1: require_env_file exits 1 for random non-existent paths (100 iterations)" {
+    local iterations=100
+    local i
+
+    for ((i = 1; i <= iterations; i++)); do
+        # Generate a random non-existent path
+        local rand_segment1 rand_segment2 rand_segment3
+        rand_segment1="$(random_string 8)"
+        rand_segment2="$(random_string 6)"
+        rand_segment3="$(random_string 10)"
+        local fake_path="${TEST_TEMP_DIR}/nonexistent_${rand_segment1}/${rand_segment2}/${rand_segment3}/.env"
+
+        # Ensure the path truly does not exist
+        if [ -f "$fake_path" ]; then
+            fail "Iteration $i: Generated path unexpectedly exists: $fake_path"
+        fi
+
+        # Run require_env_file in a subshell and capture exit code
+        local exit_code=0
+        (require_env_file "$fake_path") 2>/dev/null || exit_code=$?
+
+        if [ "$exit_code" -ne 1 ]; then
+            fail "Iteration $i: require_env_file('$fake_path') exited with $exit_code, expected 1"
+        fi
+    done
+}
+
+@test "Property 7.2: require_env_file does not execute any install operation when .env is missing" {
+    local iterations=100
+    local i
+
+    for ((i = 1; i <= iterations; i++)); do
+        local rand_name
+        rand_name="$(random_string 12)"
+        local fake_path="/tmp/nonexistent_${rand_name}_${i}/.env"
+
+        # Capture all output from require_env_file to verify no install commands are attempted
+        local output=""
+        local exit_code=0
+        output=$( (require_env_file "$fake_path") 2>&1 ) || exit_code=$?
+
+        # Verify exit code is 1
+        if [ "$exit_code" -ne 1 ]; then
+            fail "Iteration $i: Expected exit 1, got $exit_code for path '$fake_path'"
+        fi
+
+        # Verify output contains error message (not install commands)
+        if [[ "$output" != *"não encontrado"* ]] && [[ "$output" != *"setup.sh"* ]]; then
+            fail "Iteration $i: Output did not contain expected error messages. Got: $output"
+        fi
+
+        # Verify no installation-related keywords in output
+        if [[ "$output" == *"apt install"* ]] || [[ "$output" == *"dnf install"* ]] || \
+           [[ "$output" == *"pip install"* ]] || [[ "$output" == *"docker compose"* ]]; then
+            fail "Iteration $i: Detected install operation in output when .env is missing: $output"
+        fi
+    done
+}
+
+# Feature: suap-setup, Property 6: Round-trip do Wizard_Env
+#
+# Para qualquer conjunto de valores de entrada (PYTHON_VERSION, BASE_DIR,
+# SUAP_DIR, VENV_DIR como strings não-vazias, e GIT_URL como string não-vazia),
+# quando esses valores são fornecidos como stdin ao interactive_env_wizard(),
+# o arquivo .env resultante, ao ser carregado com load_env_file(), deve produzir
+# variáveis de shell com exatamente os mesmos valores fornecidos.
+#
+# **Validates: Requirements 28.3, 28.4, 28.5, 28.6, 28.8, 28.9**
+
+@test "Property 6: Round-trip do Wizard_Env com valores aleatórios (100 iterações)" {
+    local iterations=100
+    local i
+
+    for ((i = 1; i <= iterations; i++)); do
+        local env_file="${TEST_TEMP_DIR}/wizard_env_${i}"
+
+        # Generate random values for each wizard field
+        local rand_python_version
+        rand_python_version="3.$(( (RANDOM % 5) + 10 ))"  # e.g., 3.10, 3.11, 3.12, 3.13, 3.14
+
+        local rand_base_dir
+        rand_base_dir="/opt/$(random_string 6)"
+
+        local rand_suap_dir
+        rand_suap_dir="/srv/$(random_string 5)/suap"
+
+        local rand_venv_dir
+        rand_venv_dir="/var/venvs/$(random_string 7)"
+
+        local rand_git_url
+        rand_git_url="https://github.com/$(random_string 5)/$(random_string 8).git"
+
+        # Pipe 5 lines of input to interactive_env_wizard (one per read -rp prompt)
+        # Order: PYTHON_VERSION, BASE_DIR, SUAP_DIR, VENV_DIR, GIT_URL
+        printf '%s\n%s\n%s\n%s\n%s\n' \
+            "$rand_python_version" \
+            "$rand_base_dir" \
+            "$rand_suap_dir" \
+            "$rand_venv_dir" \
+            "$rand_git_url" \
+            | interactive_env_wizard "$env_file" > /dev/null 2>&1
+
+        # Verify .env file was created
+        [ -f "$env_file" ] || fail "Iteration $i: .env file was not created at $env_file"
+
+        # Unset variables before loading to ensure clean state
+        unset PYTHON_VERSION BASE_DIR SUAP_DIR VENV_DIR GIT_URL 2>/dev/null || true
+
+        # Load the generated .env using load_env_file
+        load_env_file "$env_file"
+
+        # Verify each variable matches the original input
+        if [ "$PYTHON_VERSION" != "$rand_python_version" ]; then
+            fail "Iteration $i: PYTHON_VERSION expected '$rand_python_version' but got '$PYTHON_VERSION'"
+        fi
+
+        if [ "$BASE_DIR" != "$rand_base_dir" ]; then
+            fail "Iteration $i: BASE_DIR expected '$rand_base_dir' but got '$BASE_DIR'"
+        fi
+
+        if [ "$SUAP_DIR" != "$rand_suap_dir" ]; then
+            fail "Iteration $i: SUAP_DIR expected '$rand_suap_dir' but got '$SUAP_DIR'"
+        fi
+
+        if [ "$VENV_DIR" != "$rand_venv_dir" ]; then
+            fail "Iteration $i: VENV_DIR expected '$rand_venv_dir' but got '$VENV_DIR'"
+        fi
+
+        if [ "$GIT_URL" != "$rand_git_url" ]; then
+            fail "Iteration $i: GIT_URL expected '$rand_git_url' but got '$GIT_URL'"
+        fi
+
+        # Clean up variables for next iteration
+        unset PYTHON_VERSION BASE_DIR SUAP_DIR VENV_DIR GIT_URL
+    done
+}

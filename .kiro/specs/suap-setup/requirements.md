@@ -22,6 +22,7 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 - **Arquivo_Env_Central**: Arquivo centralizado de configuração (`.env`) na raiz do repositório suap-setup que contém todas as variáveis reutilizáveis entre os scripts.
 - **Docker_Compose**: Ferramenta para definir e executar aplicações multi-container Docker usando arquivo `docker-compose.yml`.
 - **Dockhand**: Interface web para gerenciamento de containers Docker (https://dockhand.pro/), executada como container Docker.
+- **Wizard_Env**: Assistente interativo executado pelo Wrapper para criação do Arquivo_Env_Central quando este não existe, solicitando ao usuário os valores de cada variável via prompts no terminal.
 
 ## Requirements
 
@@ -36,10 +37,11 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 3. WHEN o Script_Prod é executado, THE Script_Prod SHALL carregar as variáveis a partir do Arquivo_Env_Central antes de iniciar qualquer operação.
 4. WHEN o Script_Docker_Dev é executado, THE Script_Docker_Dev SHALL carregar as variáveis a partir do Arquivo_Env_Central antes de iniciar qualquer operação.
 5. WHEN o Script_Docker_Prod é executado, THE Script_Docker_Prod SHALL carregar as variáveis a partir do Arquivo_Env_Central antes de iniciar qualquer operação.
-6. IF o Arquivo_Env_Central não existe na raiz do repositório, THEN THE Wrapper SHALL criar o arquivo com valores padrão e informar o usuário.
-7. THE Arquivo_Env_Central SHALL conter comentários descrevendo cada variável e seus valores esperados.
-8. WHEN uma variável é definida no Arquivo_Env_Central, THE Script_Dev SHALL utilizar o valor centralizado em vez de definir a variável localmente no corpo do script.
-9. WHEN uma variável é definida no Arquivo_Env_Central, THE Script_Prod SHALL utilizar o valor centralizado em vez de definir a variável localmente no corpo do script.
+6. IF o Arquivo_Env_Central não existe na raiz do repositório, THEN THE Wrapper SHALL iniciar o Wizard_Env para criação interativa do arquivo conforme definido no Requirement 28.
+7. IF o Arquivo_Env_Central não existe quando um script individual (Script_Dev, Script_Prod, Script_Docker_Dev ou Script_Docker_Prod) é executado diretamente sem passar pelo Wrapper, THEN o script SHALL exibir uma mensagem de erro informando que o Arquivo_Env_Central é obrigatório e encerrar com código de saída 1.
+8. THE Arquivo_Env_Central SHALL conter comentários descrevendo cada variável e seus valores esperados.
+9. WHEN uma variável é definida no Arquivo_Env_Central, THE Script_Dev SHALL utilizar o valor centralizado em vez de definir a variável localmente no corpo do script.
+10. WHEN uma variável é definida no Arquivo_Env_Central, THE Script_Prod SHALL utilizar o valor centralizado em vez de definir a variável localmente no corpo do script.
 
 ### Requirement 2: Detecção automática da distribuição Linux
 
@@ -83,8 +85,9 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 
 1. THE Script_Dev SHALL verificar se as dependências do sistema já estão instaladas antes de tentar instalá-las.
 2. WHEN uma ou mais dependências do sistema não estão instaladas, THE Script_Dev SHALL instalar todas as dependências necessárias usando o gerenciador de pacotes da distribuição (apt para Distribuição_Debian, dnf para Distribuição_RPM).
-3. WHEN todas as dependências já estão instaladas, THE Script_Dev SHALL prosseguir para a próxima etapa sem executar o gerenciador de pacotes.
-4. THE Script_Dev SHALL instalar dependências para: ferramentas de compilação, LDAP, Pillow, PyMSSQL, lxml, WeasyPrint, manipulação de PDF e utilitários gerais.
+3. IF a instalação de pacotes pelo gerenciador de pacotes falha, THEN THE Script_Dev SHALL exibir uma mensagem de erro e encerrar com código de saída 1.
+4. WHEN todas as dependências já estão instaladas, THE Script_Dev SHALL prosseguir para a próxima etapa sem executar o gerenciador de pacotes.
+5. THE Script_Dev SHALL instalar dependências para: ferramentas de compilação, LDAP, Pillow, PyMSSQL, lxml, WeasyPrint, manipulação de PDF e utilitários gerais.
 
 ### Requirement 6: Configuração de locale e timezone (Desenvolvimento)
 
@@ -103,9 +106,10 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 
 #### Acceptance Criteria
 
-1. WHEN o comando `uv` não está disponível no PATH, THE Script_Dev SHALL baixar e instalar o UV a partir da URL oficial.
-2. WHEN o UV é instalado, THE Script_Dev SHALL adicionar a configuração de auto-completar ao arquivo `.bashrc` do usuário.
-3. WHEN o comando `uv` já está disponível no PATH, THE Script_Dev SHALL prosseguir sem reinstalar.
+1. WHEN o comando `uv` não está disponível no PATH, THE Script_Dev SHALL verificar se o UV está instalado em outro local do sistema (ex: `~/.cargo/bin/uv`, `~/.local/bin/uv`) e adicioná-lo ao PATH caso encontrado.
+2. IF o UV não está disponível no PATH e não é encontrado em nenhum local conhecido do sistema, THEN THE Script_Dev SHALL baixar e instalar o UV a partir da URL oficial.
+3. WHEN o UV é instalado ou encontrado, THE Script_Dev SHALL adicionar a configuração de auto-completar ao arquivo `.bashrc` do usuário.
+4. WHEN o comando `uv` já está disponível no PATH, THE Script_Dev SHALL prosseguir sem reinstalar.
 
 ### Requirement 8: Clone e atualização do código SUAP (Desenvolvimento)
 
@@ -139,6 +143,7 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 4. WHEN o arquivo `pyproject.toml` existe no projeto, THE Script_Dev SHALL instalar dependências usando `uv sync --group dev`.
 5. WHEN o arquivo `pyproject.toml` não existe e o diretório `requirements/` existe, THE Script_Dev SHALL instalar dependências usando `uv pip install -r requirements/development.txt`.
 6. IF nem o arquivo `pyproject.toml` nem o diretório `requirements/` existem, THEN THE Script_Dev SHALL exibir uma mensagem de erro e encerrar com código de saída 1.
+7. IF a instalação de dependências (uv sync ou uv pip install) falha, THEN THE Script_Dev SHALL exibir uma mensagem de erro e encerrar com código de saída 1.
 
 ### Requirement 11: Instalação de dependências do sistema (Produção)
 
@@ -148,7 +153,8 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 
 1. THE Script_Prod SHALL verificar se as dependências do sistema já estão instaladas antes de tentar instalá-las.
 2. WHEN uma ou mais dependências não estão instaladas, THE Script_Prod SHALL instalar todas as dependências necessárias usando o gerenciador de pacotes da distribuição.
-3. THE Script_Prod SHALL instalar pacotes adicionais de produção incluindo: python3, supervisor, cron/cronie, ntp/chrony e ferramentas de gerenciamento de processos.
+3. IF a instalação de pacotes pelo gerenciador de pacotes falha, THEN THE Script_Prod SHALL exibir uma mensagem de erro e encerrar com código de saída 1.
+4. THE Script_Prod SHALL instalar pacotes adicionais de produção incluindo: python3, supervisor, cron/cronie, ntp/chrony e ferramentas de gerenciamento de processos.
 
 ### Requirement 12: Validação de execução como root (Produção)
 
@@ -167,6 +173,7 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 
 1. WHEN o diretório do SUAP não contém um repositório Git, THE Script_Prod SHALL executar `git clone --depth 1` da URL configurada.
 2. WHEN o diretório do SUAP já contém um repositório Git, THE Script_Prod SHALL executar `git checkout master` seguido de `git pull` para atualizar.
+3. IF o diretório do SUAP não contém um repositório Git, THEN THE Script_Prod SHALL executar apenas `git clone` e não executar `git checkout` ou `git pull`.
 
 ### Requirement 14: Criação de virtualenv e instalação de dependências (Produção)
 
@@ -179,6 +186,7 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 3. WHEN o arquivo `pyproject.toml` existe no projeto, THE Script_Prod SHALL instalar dependências usando `pip install . --group prod --no-cache-dir`.
 4. WHEN o arquivo `pyproject.toml` não existe e o diretório `requirements/` existe, THE Script_Prod SHALL instalar dependências usando `pip install -r requirements/production.txt --no-cache-dir`.
 5. IF nem o arquivo `pyproject.toml` nem o diretório `requirements/` existem, THEN THE Script_Prod SHALL exibir uma mensagem de erro e encerrar com código de saída 1.
+6. IF a instalação de dependências via pip install falha, THEN THE Script_Prod SHALL exibir uma mensagem de erro e encerrar com código de saída diferente de zero.
 
 ### Requirement 15: Configuração do Supervisor (Produção)
 
@@ -193,7 +201,8 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 5. IF o usuário informa uma opção inválida, THEN THE Script_Prod SHALL exibir uma mensagem de erro e encerrar com código de saída 1.
 6. IF um arquivo de configuração do Supervisor não é encontrado no diretório de instalação, THEN THE Script_Prod SHALL exibir mensagem de erro e encerrar com código de saída 1.
 7. WHEN os arquivos são copiados, THE Script_Prod SHALL definir permissão de execução nos scripts runner.
-8. WHEN a configuração do Supervisor é concluída, THE Script_Prod SHALL executar `supervisorctl reread` e `supervisorctl update` para aplicar as alterações.
+8. WHEN os arquivos de configuração do Supervisor são efetivamente copiados para o diretório de destino, THE Script_Prod SHALL executar `supervisorctl reread` e `supervisorctl update` para aplicar as alterações.
+9. WHEN nenhum arquivo de configuração do Supervisor é copiado (etapa pulada por idempotência), THE Script_Prod SHALL não executar `supervisorctl reread` nem `supervisorctl update`.
 
 ### Requirement 16: Configuração de permissões de arquivos (Produção)
 
@@ -242,7 +251,7 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 #### Acceptance Criteria
 
 1. WHILE executando em uma Distribuição_Debian, THE Script_Nginx SHALL copiar a configuração para `/etc/nginx/sites-available/suap` e criar um link simbólico em `/etc/nginx/sites-enabled/suap`.
-2. WHILE executando em uma Distribuição_Debian, THE Script_Nginx SHALL remover o link simbólico da configuração padrão em `/etc/nginx/sites-enabled/default`.
+2. WHILE executando em uma Distribuição_Debian, THE Script_Nginx SHALL remover o link simbólico da configuração padrão em `/etc/nginx/sites-enabled/default` somente após a configuração do SUAP ser copiada e o link simbólico em `sites-enabled/suap` ser criado com sucesso.
 3. WHILE executando em uma Distribuição_RPM, THE Script_Nginx SHALL copiar a configuração para `/etc/nginx/conf.d/suap.conf`.
 
 ### Requirement 21: Configuração do Nginx como proxy reverso
@@ -269,7 +278,7 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 1. THE Script_Docker_Dev SHALL fornecer um arquivo `Dockerfile` para construção da imagem de desenvolvimento do SUAP com todas as dependências necessárias.
 2. THE Script_Docker_Dev SHALL fornecer um arquivo `docker-compose.yml` que defina os serviços necessários para o ambiente de desenvolvimento (aplicação SUAP, banco de dados PostgreSQL e Redis).
 3. WHEN o Script_Docker_Dev é executado, THE Script_Docker_Dev SHALL verificar se o Docker e o Docker_Compose estão instalados no sistema.
-4. IF o Docker ou o Docker_Compose não estão instalados, THEN THE Script_Docker_Dev SHALL exibir uma mensagem de erro informando os pré-requisitos e encerrar com código de saída 1.
+4. IF o Docker ou o Docker_Compose não estão instalados, THEN THE Script_Docker_Dev SHALL exibir uma mensagem de erro informando os pré-requisitos, bloquear todas as operações de container e encerrar com código de saída 1.
 5. WHEN o Docker e o Docker_Compose estão disponíveis, THE Script_Docker_Dev SHALL construir as imagens e iniciar os containers usando `docker compose up`.
 6. THE Script_Docker_Dev SHALL montar o código-fonte do SUAP como volume no container para permitir edição em tempo real no host.
 7. THE Script_Docker_Dev SHALL expor a porta 8000 do container de desenvolvimento para acesso local à aplicação.
@@ -285,7 +294,7 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 1. THE Script_Docker_Prod SHALL fornecer um arquivo `Dockerfile` otimizado para produção com imagem base mínima e multi-stage build.
 2. THE Script_Docker_Prod SHALL fornecer um arquivo `docker-compose.prod.yml` que defina os serviços necessários para o ambiente de produção (aplicação SUAP, Celery Worker, Celery Beat, Celery Flower, Redis e Nginx como proxy reverso).
 3. WHEN o Script_Docker_Prod é executado, THE Script_Docker_Prod SHALL verificar se o Docker e o Docker_Compose estão instalados no sistema.
-4. IF o Docker ou o Docker_Compose não estão instalados, THEN THE Script_Docker_Prod SHALL exibir uma mensagem de erro informando os pré-requisitos e encerrar com código de saída 1.
+4. IF o Docker ou o Docker_Compose não estão instalados, THEN THE Script_Docker_Prod SHALL exibir uma mensagem de erro informando os pré-requisitos, bloquear todas as operações de container e encerrar com código de saída 1.
 5. WHEN o Docker e o Docker_Compose estão disponíveis, THE Script_Docker_Prod SHALL construir as imagens e iniciar os containers usando `docker compose -f docker-compose.prod.yml up -d`.
 6. THE Script_Docker_Prod SHALL configurar o container Nginx como proxy reverso para o container da aplicação SUAP.
 7. THE Script_Docker_Prod SHALL configurar volumes persistentes para dados do banco de dados, arquivos de mídia e logs.
@@ -314,6 +323,11 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 2. THE Script_Dev SHALL exibir mensagens em cor amarela para etapas já concluídas anteriormente (pulos por idempotência).
 3. THE Script_Prod SHALL exibir mensagens de progresso em cor verde para ações sendo executadas.
 4. THE Script_Prod SHALL exibir mensagens em cor amarela para etapas já concluídas anteriormente (pulos por idempotência).
+5. THE Script_Redis SHALL exibir mensagens de progresso em cor verde para ações sendo executadas.
+6. THE Script_Nginx SHALL exibir mensagens de progresso em cor verde para ações sendo executadas.
+7. THE Script_Docker_Dev SHALL exibir mensagens de progresso em cor verde para ações sendo executadas.
+8. THE Script_Docker_Prod SHALL exibir mensagens de progresso em cor verde para ações sendo executadas.
+9. THE Wrapper SHALL exibir mensagens de progresso em cor verde para ações sendo executadas.
 
 ### Requirement 26: Mensagem final com próximos passos
 
@@ -335,6 +349,23 @@ Este documento define os requisitos para o projeto **suap-setup**, uma coleção
 3. WHEN o Docker está disponível, THE Wrapper SHALL executar `docker pull lscr.io/linuxserver/dockhand:latest` para obter a imagem mais recente do Dockhand.
 4. WHEN a imagem é obtida, THE Wrapper SHALL iniciar o container Dockhand expondo a interface web na porta 9093 do host.
 5. WHEN o container Dockhand é iniciado, THE Wrapper SHALL montar o socket do Docker (`/var/run/docker.sock`) como volume para permitir o gerenciamento dos containers do host.
-6. WHEN o container Dockhand é iniciado com sucesso, THE Wrapper SHALL exibir uma mensagem informando a URL de acesso à interface web (http://localhost:9093).
+6. WHEN o container Dockhand é iniciado com sucesso, THE Wrapper SHALL exibir uma mensagem informando a URL de acesso à interface web usando a porta efetivamente configurada para o container (ex: http://localhost:<porta_configurada>).
 7. IF o container Dockhand falha ao iniciar, THEN THE Wrapper SHALL exibir uma mensagem de erro com o motivo da falha e encerrar com código de saída 1.
 8. WHEN já existe um container Dockhand em execução, THE Wrapper SHALL exibir uma mensagem informando que o Dockhand já está ativo e mostrar a URL de acesso.
+
+### Requirement 28: Criação interativa do arquivo de ambiente
+
+**User Story:** Como desenvolvedor, eu quero que o script me pergunte interativamente os valores de cada variável ao criar o `.env` pela primeira vez, para que eu possa personalizar o ambiente sem editar o arquivo manualmente depois.
+
+#### Acceptance Criteria
+
+1. WHEN o Arquivo_Env_Central não existe e o Wrapper é executado, THE Wizard_Env SHALL exibir um prompt interativo para cada variável na seguinte ordem: PYTHON_VERSION, BASE_DIR, SUAP_DIR, VENV_DIR, GIT_URL.
+2. WHEN o Wizard_Env exibe o prompt de uma variável, THE Wizard_Env SHALL mostrar o nome da variável, uma descrição do propósito, exemplos de valores válidos e o valor padrão para ambiente de desenvolvimento.
+3. WHEN o usuário pressiona Enter sem digitar um valor para PYTHON_VERSION, THE Wizard_Env SHALL utilizar o valor padrão `3.12`.
+4. WHEN o usuário pressiona Enter sem digitar um valor para BASE_DIR, THE Wizard_Env SHALL utilizar o valor padrão `$HOME/Projetos`.
+5. WHEN o usuário pressiona Enter sem digitar um valor para SUAP_DIR, THE Wizard_Env SHALL utilizar o valor padrão `${BASE_DIR}/suap`.
+6. WHEN o usuário pressiona Enter sem digitar um valor para VENV_DIR, THE Wizard_Env SHALL utilizar o valor padrão `${SUAP_DIR}/.venv`.
+7. IF o usuário pressiona Enter sem digitar um valor para GIT_URL (valor vazio), THEN THE Wizard_Env SHALL exibir uma mensagem de erro informando que GIT_URL é obrigatória e encerrar com código de saída 1.
+8. WHEN o usuário informa qualquer valor não vazio para GIT_URL, THE Wizard_Env SHALL aceitar a string fornecida e utilizá-la sem validação adicional de formato.
+9. WHEN todos os valores são coletados, THE Wizard_Env SHALL gravar o Arquivo_Env_Central com comentários descritivos acima de cada variável.
+10. WHEN o Arquivo_Env_Central é gravado com sucesso, THE Wizard_Env SHALL exibir uma mensagem de confirmação mostrando o caminho do arquivo criado e um resumo dos valores configurados.

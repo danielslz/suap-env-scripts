@@ -27,7 +27,10 @@ source "${SCRIPT_DIR}/lib/common.sh"
 DISTRO_TYPE="rpm"
 export DISTRO_TYPE
 
-### 2. Carregar variáveis centralizadas
+### 2. Verificar existência do .env
+require_env_file "${SCRIPT_DIR}/.env"
+
+### 3. Carregar variáveis centralizadas
 load_env_file "${SCRIPT_DIR}/.env"
 
 ### Sobrescrever variáveis para ambiente de desenvolvimento
@@ -55,7 +58,10 @@ PACKAGES=(
 
 if ! check_all_packages_installed "${PACKAGES[@]}"; then
   msg_action "Instalando dependências do sistema operacional"
-  sudo dnf install -y "${PACKAGES[@]}"
+  if ! sudo dnf install -y "${PACKAGES[@]}"; then
+    msg_error "Falha na instalação de pacotes do sistema."
+    exit 1
+  fi
 else
   msg_skip "Dependências do sistema já estão instaladas"
 fi
@@ -79,19 +85,27 @@ else
 fi
 
 ### 7. Instalar UV (se não disponível no PATH)
-if ! command -v uv &>/dev/null; then
+if command -v uv &>/dev/null; then
+  msg_skip "UV já está instalado"
+elif [ -x "${HOME}/.cargo/bin/uv" ]; then
+  msg_skip "UV encontrado em ~/.cargo/bin/uv, adicionando ao PATH"
+  export PATH="${HOME}/.cargo/bin:${PATH}"
+elif [ -x "${HOME}/.local/bin/uv" ]; then
+  msg_skip "UV encontrado em ~/.local/bin/uv, adicionando ao PATH"
+  export PATH="${HOME}/.local/bin:${PATH}"
+else
   msg_action "Instalando o UV"
   curl -LsSf https://astral.sh/uv/install.sh | sh
-  # Adicionar auto-completar ao .bashrc
-  echo 'eval "$(uv generate-shell-completion bash)"' >> "${HOME}/.bashrc"
-  # Carregar UV no PATH para esta sessão
-  source "${HOME}/.bashrc" 2>/dev/null || true
-  if ! command -v uv &>/dev/null; then
-    source "${HOME}/.local/bin/env" 2>/dev/null || true
-    eval "$(uv generate-shell-completion bash)" 2>/dev/null || true
+
+  # Garantir UV disponível no PATH da sessão atual
+  if [ -f "${HOME}/.local/bin/env" ]; then
+    source "${HOME}/.local/bin/env"
   fi
-else
-  msg_skip "UV já está instalado"
+
+  # Adicionar auto-completar ao .bashrc (se não já adicionado)
+  if ! grep -q 'uv generate-shell-completion bash' "${HOME}/.bashrc" 2>/dev/null; then
+    echo 'eval "$(uv generate-shell-completion bash)"' >> "${HOME}/.bashrc"
+  fi
 fi
 
 ### 8. Clone/pull do repositório SUAP
@@ -144,9 +158,15 @@ fi
 msg_action "Instalando/atualizando dependências Python"
 cd "${SUAP_DIR}"
 if [ -f "${SUAP_DIR}/pyproject.toml" ]; then
-  uv sync --group dev
+  if ! uv sync --group dev; then
+    msg_error "Falha na instalação de dependências Python."
+    exit 1
+  fi
 elif [ -d "${SUAP_DIR}/requirements" ]; then
-  uv pip install -r requirements/development.txt
+  if ! uv pip install -r requirements/development.txt; then
+    msg_error "Falha na instalação de dependências Python."
+    exit 1
+  fi
 else
   msg_error "Não foi encontrado pyproject.toml nem pasta requirements em ${SUAP_DIR}"
   exit 1

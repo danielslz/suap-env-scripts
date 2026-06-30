@@ -35,16 +35,23 @@ sudo systemctl enable nginx
 # --- Copiar configuração do SUAP ---
 
 NGINX_CONF_PATH=$(get_nginx_conf_path)
+NGINX_CONFIGURED=false
 
-msg_action "Copiando configuração do SUAP para ${NGINX_CONF_PATH}..."
-sudo cp "${SCRIPT_DIR}/nginx/suap" "${NGINX_CONF_PATH}"
+if [ -f "${NGINX_CONF_PATH}" ]; then
+  msg_skip "Configuração do SUAP já existe em ${NGINX_CONF_PATH}."
+else
+  msg_action "Copiando configuração do SUAP para ${NGINX_CONF_PATH}..."
+  sudo cp "${SCRIPT_DIR}/nginx/suap" "${NGINX_CONF_PATH}"
 
-# Criar link simbólico em sites-enabled
-msg_action "Criando link simbólico em /etc/nginx/sites-enabled/suap..."
-sudo ln -sf /etc/nginx/sites-available/suap /etc/nginx/sites-enabled/suap
+  # Criar link simbólico em sites-enabled
+  msg_action "Criando link simbólico em /etc/nginx/sites-enabled/suap..."
+  sudo ln -sf /etc/nginx/sites-available/suap /etc/nginx/sites-enabled/suap
 
-# Remover configuração padrão se existir
-if [ -e /etc/nginx/sites-enabled/default ]; then
+  NGINX_CONFIGURED=true
+fi
+
+# Remover configuração padrão somente se a configuração do SUAP acabou de ser instalada
+if [ "${NGINX_CONFIGURED}" = "true" ] && [ -e /etc/nginx/sites-enabled/default ]; then
   msg_action "Removendo configuração padrão do Nginx..."
   sudo rm -f /etc/nginx/sites-enabled/default
 fi

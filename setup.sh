@@ -10,8 +10,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Carregar biblioteca compartilhada
 source "${SCRIPT_DIR}/lib/common.sh"
 
-# Carregar variáveis do .env centralizado (cria se não existir)
-load_env_file "${SCRIPT_DIR}/.env"
+# Verificar se .env existe:
+#   - Se não: executar interactive_env_wizard() para guiar o usuário
+#   - Se sim: carregar com load_env_file() normalmente
+ENV_FILE="${SCRIPT_DIR}/.env"
+
+if [ ! -f "${ENV_FILE}" ]; then
+  interactive_env_wizard "${ENV_FILE}"
+fi
+
+load_env_file "${ENV_FILE}"
 
 # Detectar distribuição Linux (define DISTRO_TYPE e DISTRO_NAME)
 detect_distro

@@ -10,7 +10,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # 1. Source da biblioteca compartilhada
 source "${SCRIPT_DIR}/lib/common.sh"
 
-# 2. Carregar variáveis do .env centralizado
+# 2. Verificar existência do .env
+require_env_file "${SCRIPT_DIR}/.env"
+
+# 3. Carregar variáveis do .env centralizado
 load_env_file "${SCRIPT_DIR}/.env"
 
 # 3. Verificar se Docker e Docker Compose estão disponíveis

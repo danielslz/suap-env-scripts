@@ -305,6 +305,96 @@ Implementação dos scripts de automação do ambiente SUAP, partindo da bibliot
 - [x] 14. Checkpoint final - Verificar integração Dockhand
   - Garantir que todos os testes passem, perguntar ao usuário se houver dúvidas.
 
+- [x] 15. Implementar wizard interativo de .env, fallback de require_env_file, e melhorias de robustez
+  - [x] 15.1 Implementar `interactive_env_wizard()` em `lib/common.sh`
+    - Implementar função `interactive_env_wizard(env_path)` que solicita ao usuário valores para: PYTHON_VERSION, BASE_DIR, SUAP_DIR, VENV_DIR, GIT_URL
+    - Para cada variável: exibir nome, descrição do propósito, exemplos e valor padrão (dev)
+    - Se o usuário pressiona Enter sem digitar → usar valor padrão (exceto GIT_URL)
+    - GIT_URL não possui valor padrão → exit 1 com `msg_error` se vazia
+    - Após coleta, gravar o .env com comentários descritivos por variável
+    - Exibir confirmação ao usuário com os valores gravados
+    - _Requisitos: 28.1, 28.2, 28.3, 28.4, 28.5, 28.6, 28.7, 28.8, 28.9, 28.10_
+
+  - [x] 15.2 Implementar `require_env_file()` em `lib/common.sh`
+    - Implementar função `require_env_file(env_path)` que verifica se .env existe
+    - Se .env não existe: exibir `msg_error` orientando executar `setup.sh` primeiro e `exit 1`
+    - Atualizar `deb/suap-dev.sh`, `rpm/suap-dev.sh` para chamar `require_env_file()` no início
+    - Atualizar `deb/suap-prod.sh`, `rpm/suap-prod.sh` para chamar `require_env_file()` no início
+    - Atualizar `docker/dev/docker-setup.sh`, `docker/prod/docker-setup.sh` para chamar `require_env_file()` no início
+    - _Requisitos: 1.7_
+
+  - [x] 15.3 Atualizar `setup.sh` para usar `interactive_env_wizard()`
+    - Substituir chamada de `create_default_env()` por `interactive_env_wizard()` quando .env não existe
+    - Manter fluxo: se .env já existe, carregar com `load_env_file()` normalmente
+    - _Requisitos: 1.6, 28.1_
+
+  - [x] 15.4 Adicionar halt em falha de instalação de pacotes nos scripts dev
+    - Atualizar `deb/suap-dev.sh`: verificar código de retorno de `apt install` e `exit 1` em caso de falha
+    - Atualizar `rpm/suap-dev.sh`: verificar código de retorno de `dnf install` e `exit 1` em caso de falha
+    - Exibir `msg_error` com descrição do erro antes do exit
+    - _Requisitos: 5.3_
+
+  - [x] 15.5 Adicionar halt em falha de instalação de pacotes nos scripts prod
+    - Atualizar `deb/suap-prod.sh`: verificar código de retorno de `apt install` e `exit 1` em caso de falha
+    - Atualizar `rpm/suap-prod.sh`: verificar código de retorno de `dnf install` e `exit 1` em caso de falha
+    - Exibir `msg_error` com descrição do erro antes do exit
+    - _Requisitos: 11.3_
+
+  - [x] 15.6 Implementar detecção de UV em locais conhecidos antes de download
+    - Atualizar `deb/suap-dev.sh`: verificar `~/.cargo/bin/uv` e `~/.local/bin/uv` antes de baixar
+    - Atualizar `rpm/suap-dev.sh`: verificar `~/.cargo/bin/uv` e `~/.local/bin/uv` antes de baixar
+    - Se encontrado em local conhecido: adicionar ao PATH e pular download
+    - Se não encontrado em nenhum local: prosseguir com download da URL oficial
+    - _Requisitos: 7.1, 7.2_
+
+  - [x] 15.7 Adicionar halt em falha de instalação de dependências Python
+    - Atualizar `deb/suap-dev.sh` e `rpm/suap-dev.sh`: verificar retorno de `uv sync` / `uv pip install` e `exit 1` em falha
+    - Atualizar `deb/suap-prod.sh` e `rpm/suap-prod.sh`: verificar retorno de `pip install` e `exit 1` em falha
+    - Exibir `msg_error` com descrição antes do exit
+    - _Requisitos: 10.7, 14.6_
+
+  - [x] 15.8 Implementar supervisorctl condicional nos scripts prod
+    - Atualizar `deb/suap-prod.sh`: rastrear flag `FILES_COPIED=true` quando arquivos são efetivamente copiados
+    - Atualizar `rpm/suap-prod.sh`: mesma lógica de flag
+    - Somente executar `supervisorctl reread` e `supervisorctl update` quando `FILES_COPIED=true`
+    - Se nenhum arquivo foi copiado (idempotência): pular supervisorctl com `msg_skip`
+    - _Requisitos: 15.8, 15.9_
+
+  - [x] 15.9 Implementar remoção condicional do nginx default
+    - Atualizar `deb/install-nginx.sh`: só remover link `/etc/nginx/sites-enabled/default` após configuração do SUAP ser copiada com sucesso E link simbólico em `sites-enabled/suap` ser criado com sucesso
+    - Se a cópia foi pulada por idempotência: NÃO remover o default
+    - _Requisitos: 20.2_
+
+  - [x] 15.10 Garantir mensagens verdes (msg_action) em todos os scripts
+    - Verificar e adicionar `msg_action()` em `deb/install-redis.sh` e `rpm/install-redis.sh`
+    - Verificar e adicionar `msg_action()` em `deb/install-nginx.sh` e `rpm/install-nginx.sh`
+    - Verificar e adicionar `msg_action()` em `docker/dev/docker-setup.sh` e `docker/prod/docker-setup.sh`
+    - Verificar e adicionar `msg_action()` em `setup.sh` (Wrapper)
+    - _Requisitos: 25.5, 25.6, 25.7, 25.8, 25.9_
+
+  - [x] 15.11 Escrever teste de propriedade para round-trip do Wizard_Env
+    - **Property 6: Round-trip do Wizard_Env**
+    - Atualizar ou criar teste em `tests/property/test_env_roundtrip.bats`
+    - Simular inputs do wizard via stdin e verificar que .env gerado contém os mesmos valores
+    - Mínimo 100 iterações com valores aleatórios
+    - **Valida: Requisitos 28.3, 28.4, 28.5, 28.6, 28.8, 28.9**
+
+  - [x] 15.12 Escrever teste de propriedade para fallback de .env
+    - **Property 7: Fallback de .env em scripts individuais**
+    - Atualizar ou criar teste em `tests/property/test_env_roundtrip.bats`
+    - Verificar que todos os scripts individuais retornam exit 1 quando .env não existe
+    - Verificar que nenhuma operação de instalação é executada
+    - **Valida: Requisitos 1.7**
+
+  - [x] 15.13 Escrever teste de propriedade para mensagens verdes
+    - **Property 8: Mensagens de progresso em verde para todos os scripts**
+    - Criar ou atualizar teste que verifique uso de `msg_action()` em todos os scripts
+    - Verificar presença de chamadas `msg_action` em cada script
+    - **Valida: Requisitos 25.5, 25.6, 25.7, 25.8, 25.9**
+
+- [x] 16. Checkpoint final - Verificar melhorias de robustez
+  - Garantir que todos os testes passem, perguntar ao usuário se houver dúvidas.
+
 ## Notes
 
 - Tasks marcadas com `*` são opcionais e podem ser puladas para um MVP mais rápido
@@ -333,7 +423,11 @@ Implementação dos scripts de automação do ambiente SUAP, partindo da bibliot
     { "id": 10, "tasks": ["10.2", "10.3"] },
     { "id": 11, "tasks": ["11.1", "11.2"] },
     { "id": 12, "tasks": ["13.1", "13.2"] },
-    { "id": 13, "tasks": ["13.3", "13.4"] }
+    { "id": 13, "tasks": ["13.3", "13.4"] },
+    { "id": 14, "tasks": ["15.1", "15.2"] },
+    { "id": 15, "tasks": ["15.3", "15.4", "15.5", "15.6", "15.7"] },
+    { "id": 16, "tasks": ["15.8", "15.9", "15.10"] },
+    { "id": 17, "tasks": ["15.11", "15.12", "15.13"] }
   ]
 }
 ```

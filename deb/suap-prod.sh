@@ -8,7 +8,10 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 source "${SCRIPT_DIR}/lib/common.sh"
 
-# --- 2. Carregar variáveis centralizadas ---
+# --- 2. Verificar existência do .env ---
+require_env_file "${SCRIPT_DIR}/.env"
+
+# --- 3. Carregar variáveis centralizadas ---
 load_env_file "${SCRIPT_DIR}/.env"
 
 # Definir valores padrão de produção (caso não estejam no .env)
@@ -55,7 +58,10 @@ if ! check_all_packages_installed "${PACKAGES[@]}"; then
   msg_action "Instalando dependências do sistema operacional"
   apt update -qy
   apt upgrade -y
-  apt install -y --fix-missing "${PACKAGES[@]}"
+  if ! apt install -y --fix-missing "${PACKAGES[@]}"; then
+    msg_error "Falha na instalação de pacotes do sistema."
+    exit 1
+  fi
 else
   msg_skip "Dependências do sistema já estão instaladas"
 fi
@@ -120,9 +126,15 @@ cd "${SUAP_DIR}"
 source "${VENV_DIR}/suap/bin/activate"
 pip install --upgrade pip
 if [ -f "${SUAP_DIR}/pyproject.toml" ]; then
-  pip install . --group prod --no-cache-dir
+  if ! pip install . --group prod --no-cache-dir; then
+    msg_error "Falha na instalação de dependências Python."
+    exit 1
+  fi
 elif [ -d "${SUAP_DIR}/requirements" ]; then
-  pip install -r requirements/production.txt --no-cache-dir
+  if ! pip install -r requirements/production.txt --no-cache-dir; then
+    msg_error "Falha na instalação de dependências Python."
+    exit 1
+  fi
 else
   msg_error "Não foi encontrado o pyproject.toml nem a pasta requirements em ${SUAP_DIR}"
   exit 1
@@ -145,6 +157,8 @@ echo "3) Ambos (SUAP + Celery)"
 echo ""
 read -rp "Escolha uma opção (1/2/3): " supervisor_choice
 
+FILES_COPIED=false
+
 case ${supervisor_choice} in
   1)
     msg_action "Configurando supervisor para SUAP"
@@ -152,6 +166,7 @@ case ${supervisor_choice} in
       cp "${SCRIPT_DIR}/supervisor/suap.conf" "${SUPERVISOR_CONF_DIR}/suap.conf"
       cp "${SCRIPT_DIR}/supervisor/run_suap.sh" "${BASE_DIR}/scripts/run_suap.sh"
       chmod +x "${BASE_DIR}/scripts/run_suap.sh"
+      FILES_COPIED=true
       msg_action "✓ SUAP configurado"
     else
       msg_error "Arquivo supervisor/suap.conf não encontrado em ${SCRIPT_DIR}"
@@ -170,6 +185,7 @@ case ${supervisor_choice} in
       cp "${SCRIPT_DIR}/supervisor/celery_flower.conf" "${SUPERVISOR_CONF_DIR}/celery_flower.conf"
       cp "${SCRIPT_DIR}/supervisor/run_celery_flower.sh" "${BASE_DIR}/scripts/run_celery_flower.sh"
       chmod +x "${BASE_DIR}/scripts/run_celery_flower.sh"
+      FILES_COPIED=true
       msg_action "✓ Celery configurado"
     else
       msg_error "Arquivo supervisor/celery_worker.conf não encontrado em ${SCRIPT_DIR}"
@@ -191,6 +207,7 @@ case ${supervisor_choice} in
       cp "${SCRIPT_DIR}/supervisor/celery_flower.conf" "${SUPERVISOR_CONF_DIR}/celery_flower.conf"
       cp "${SCRIPT_DIR}/supervisor/run_celery_flower.sh" "${BASE_DIR}/scripts/run_celery_flower.sh"
       chmod +x "${BASE_DIR}/scripts/run_celery_flower.sh"
+      FILES_COPIED=true
       msg_action "✓ SUAP e Celery configurados"
     else
       msg_error "Um ou mais arquivos de configuração não foram encontrados em ${SCRIPT_DIR}/supervisor"
@@ -204,8 +221,12 @@ case ${supervisor_choice} in
 esac
 
 # --- 12. Aplicar configurações do Supervisor ---
-supervisorctl reread
-supervisorctl update
+if [ "${FILES_COPIED}" = "true" ]; then
+  supervisorctl reread
+  supervisorctl update
+else
+  msg_skip "Nenhum arquivo copiado, pulando supervisorctl"
+fi
 
 # --- 13. Ajustar permissões ---
 chown -R www-data:www-data "${SUAP_DIR}"

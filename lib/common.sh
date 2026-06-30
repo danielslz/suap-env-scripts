@@ -23,6 +23,20 @@ msg_error() { echo "${RED}ERRO: $1 ${NO_COLOR}"; }
 
 # --- Gerenciamento do Arquivo .env ---
 
+# require_env_file(env_path)
+# Verifica se o .env existe; caso contrário, exibe erro e aborta.
+# Usado pelos scripts individuais que NÃO devem iniciar o wizard.
+# Exit 1 se o arquivo não existir
+require_env_file() {
+  local env_path="${1}"
+
+  if [ ! -f "${env_path}" ]; then
+    msg_error "Arquivo .env não encontrado em '${env_path}'."
+    msg_error "Execute o setup.sh primeiro para gerar o arquivo de configuração."
+    exit 1
+  fi
+}
+
 # create_default_env(env_path)
 # Cria arquivo .env com valores padrão e comentários descritivos.
 # Parâmetros: caminho absoluto onde criar o .env
@@ -57,6 +71,115 @@ EOF
 
   msg_action "Arquivo .env criado em ${env_path} com valores padrão."
   msg_action "Edite o arquivo conforme seu ambiente antes de prosseguir."
+}
+
+# interactive_env_wizard(env_path)
+# Assistente interativo para criação do .env na primeira execução pelo wrapper.
+# Solicita ao usuário: PYTHON_VERSION, BASE_DIR, SUAP_DIR, VENV_DIR, GIT_URL.
+# Para cada variável:
+#   - Exibe nome, descrição do propósito, exemplos e valor padrão (dev)
+#   - Se o usuário pressiona Enter sem digitar → usa valor padrão
+# Exceção: GIT_URL não possui valor padrão → exit 1 se vazia
+# Após coleta, grava o .env com comentários descritivos e exibe confirmação.
+# Parâmetros: caminho absoluto onde criar o .env
+# Exit 1 se GIT_URL vazia
+interactive_env_wizard() {
+  local env_path="${1}"
+
+  echo ""
+  echo "=== Assistente de Configuração do suap-setup ==="
+  echo "Responda às perguntas abaixo para criar o arquivo .env."
+  echo "Pressione Enter para aceitar o valor padrão entre colchetes."
+  echo ""
+
+  # --- PYTHON_VERSION ---
+  echo "PYTHON_VERSION"
+  echo "  Descrição: Versão do Python a ser utilizada na instalação."
+  echo "  Exemplos: 3.11, 3.12, 3.13"
+  local default_python="3.12"
+  read -rp "  Valor [${default_python}]: " input_python
+  local python_version="${input_python:-${default_python}}"
+  echo ""
+
+  # --- BASE_DIR ---
+  echo "BASE_DIR"
+  echo "  Descrição: Diretório base para instalação do projeto."
+  echo "  Exemplos: \$HOME/Projetos (dev), /opt (prod)"
+  local default_basedir="\$HOME/Projetos"
+  read -rp "  Valor [${default_basedir}]: " input_basedir
+  local base_dir="${input_basedir:-${default_basedir}}"
+  echo ""
+
+  # --- SUAP_DIR ---
+  echo "SUAP_DIR"
+  echo "  Descrição: Diretório onde o código SUAP será clonado."
+  echo "  Exemplos: \${BASE_DIR}/suap, /opt/suap"
+  local default_suapdir="\${BASE_DIR}/suap"
+  read -rp "  Valor [${default_suapdir}]: " input_suapdir
+  local suap_dir="${input_suapdir:-${default_suapdir}}"
+  echo ""
+
+  # --- VENV_DIR ---
+  echo "VENV_DIR"
+  echo "  Descrição: Diretório do virtualenv Python."
+  echo "  Exemplos: \${SUAP_DIR}/.venv (dev), /opt/venv/suap (prod)"
+  local default_venvdir="\${SUAP_DIR}/.venv"
+  read -rp "  Valor [${default_venvdir}]: " input_venvdir
+  local venv_dir="${input_venvdir:-${default_venvdir}}"
+  echo ""
+
+  # --- GIT_URL ---
+  echo "GIT_URL"
+  echo "  Descrição: URL do repositório Git do SUAP (obrigatório)."
+  echo "  Exemplos: https://github.com/org/suap.git, git@github.com:org/suap.git"
+  read -rp "  Valor (obrigatório): " input_giturl
+  local git_url="${input_giturl}"
+  echo ""
+
+  if [ -z "${git_url}" ]; then
+    msg_error "GIT_URL é obrigatória. Não é possível continuar sem a URL do repositório."
+    exit 1
+  fi
+
+  # --- Gravar .env ---
+  cat > "${env_path}" << EOF
+# =============================================================
+# Configuração centralizada do suap-setup
+# Edite este arquivo conforme seu ambiente
+# =============================================================
+
+# Versão do Python a ser utilizada
+PYTHON_VERSION=${python_version}
+
+# Diretório base para instalação
+# Desenvolvimento: \$HOME/Projetos
+# Produção: /opt
+BASE_DIR=${base_dir}
+
+# Diretório onde o código SUAP será clonado
+SUAP_DIR=${suap_dir}
+
+# Diretório do virtualenv
+# Desenvolvimento: \${SUAP_DIR}/.venv
+# Produção: /opt/venv/suap
+VENV_DIR=${venv_dir}
+
+# URL do repositório Git do SUAP
+GIT_URL=${git_url}
+EOF
+
+  # --- Confirmação ---
+  echo "=== Arquivo .env criado com sucesso ==="
+  echo "  Caminho: ${env_path}"
+  echo ""
+  echo "  Valores configurados:"
+  echo "    PYTHON_VERSION = ${python_version}"
+  echo "    BASE_DIR       = ${base_dir}"
+  echo "    SUAP_DIR       = ${suap_dir}"
+  echo "    VENV_DIR       = ${venv_dir}"
+  echo "    GIT_URL        = ${git_url}"
+  echo ""
+  msg_action "Configuração salva. Prosseguindo com a execução..."
 }
 
 # load_env_file(env_path)
