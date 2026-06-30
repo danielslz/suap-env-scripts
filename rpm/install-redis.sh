@@ -7,6 +7,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Source funções utilitárias
 source "${SCRIPT_DIR}/lib/common.sh"
 
+# Carregar variáveis do .env centralizado
+load_env_file "${SCRIPT_DIR}/.env"
+
 # Definir tipo de distribuição
 DISTRO_TYPE="rpm"
 export DISTRO_TYPE

@@ -1,0 +1,48 @@
+# tests/integration/Dockerfile.debian
+# Container Debian para testes de integração do suap-setup
+# Uso:
+#   docker build -f tests/integration/Dockerfile.debian -t suap-test-deb .
+#   docker run --rm suap-test-deb bats tests/integration/test_dev_debian.bats
+
+FROM debian:bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TERM=xterm-256color
+
+# Instalar dependências básicas para execução dos testes
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    git \
+    python3 \
+    python3-venv \
+    curl \
+    ca-certificates \
+    sudo \
+    locales \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configurar locale pt_BR.UTF-8
+RUN sed -i '/pt_BR.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen
+
+# Instalar bats-core e dependências de teste
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bats \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar o projeto suap-setup para o container
+COPY . /opt/suap-setup
+
+WORKDIR /opt/suap-setup
+
+# Garantir que os scripts de teste são executáveis
+RUN chmod +x tests/run_tests.sh && \
+    find tests/ -name "*.bats" -exec chmod +r {} \; && \
+    find . -name "*.sh" -exec chmod +x {} \;
+
+# Configurar o ambiente para os testes
+ENV PROJECT_ROOT=/opt/suap-setup
+
+# Comando padrão: executar todos os testes de integração Debian
+CMD ["bash", "-c", "tests/test_helper/bats-core/bin/bats tests/integration/test_dev_debian.bats tests/integration/test_prod_debian.bats"]
