@@ -26,19 +26,19 @@ Implementação dos scripts de automação do ambiente SUAP, partindo da bibliot
     - Implementar `check_docker_available()` para verificar Docker e Docker Compose
     - _Requisitos: 2.1, 2.2, 2.3, 17.1, 17.2, 20.1, 20.3_
 
-  - [ ]* 1.3 Escrever teste de propriedade para round-trip do .env
+  - [x] 1.3 Escrever teste de propriedade para round-trip do .env
     - **Property 1: Round-trip do arquivo .env**
     - Criar `tests/property/test_env_roundtrip.bats` com mínimo 100 iterações
     - Gerar pares chave=valor aleatórios, escrever no .env e verificar carregamento correto
     - **Valida: Requisitos 1.2, 1.3, 1.4, 1.5, 4.1, 4.3, 4.5**
 
-  - [ ]* 1.4 Escrever teste de propriedade para classificação de distribuição
+  - [x] 1.4 Escrever teste de propriedade para classificação de distribuição
     - **Property 2: Classificação de distribuição determina caminhos corretos**
     - Criar `tests/property/test_distro_paths.bats` com mínimo 100 iterações
     - Gerar conteúdos aleatórios de `/etc/os-release` e verificar classificação correta
     - **Valida: Requisitos 2.1, 17.1, 17.2, 20.1, 20.3**
 
-  - [ ]* 1.5 Escrever testes unitários para funções de output e utilitários
+  - [x] 1.5 Escrever testes unitários para funções de output e utilitários
     - Criar `tests/unit/test_common_functions.bats`
     - Testar `msg_action()`, `msg_skip()`, `msg_error()` quanto ao formato de saída
     - Testar `is_pkg_installed()` com mocks de dpkg/rpm
@@ -58,7 +58,7 @@ Implementação dos scripts de automação do ambiente SUAP, partindo da bibliot
     - Opções Docker (5, 6) não dependem de detecção de distro
     - _Requisitos: 3.1, 3.2, 3.3, 3.4_
 
-  - [ ]* 2.2 Escrever teste de propriedade para roteamento do menu
+  - [x] 2.2 Escrever teste de propriedade para roteamento do menu
     - **Property 3: Roteamento do menu produz caminho de script correto**
     - Criar `tests/property/test_routing.bats` com mínimo 100 iterações
     - Gerar combinações aleatórias de opção (1-6) + distro (deb/rpm) e verificar caminho
@@ -93,7 +93,7 @@ Implementação dos scripts de automação do ambiente SUAP, partindo da bibliot
     - Adaptar nomes de pacotes para o ecossistema RPM
     - _Requisitos: 1.2, 1.8, 4.1, 4.2, 4.3, 4.4, 5.1, 5.2, 5.3, 5.4, 6.1, 6.2, 6.3, 6.4, 7.1, 7.2, 7.3, 8.1, 8.2, 9.1, 9.2, 9.3, 9.4, 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 24.1, 24.3, 25.1, 25.2, 26.1_
 
-  - [ ]* 4.3 Escrever testes unitários para fluxo de desenvolvimento
+  - [x] 4.3 Escrever testes unitários para fluxo de desenvolvimento
     - Criar `tests/unit/test_dev_flow.bats`
     - Testar carregamento de variáveis e resolução de GIT_URL
     - Testar lógica de idempotência (pular etapas já concluídas)
@@ -128,7 +128,7 @@ Implementação dos scripts de automação do ambiente SUAP, partindo da bibliot
     - Usar serviço `supervisord` em vez de `supervisor`
     - _Requisitos: 1.3, 1.9, 4.5, 4.6, 11.1, 11.2, 11.3, 12.1, 12.2, 13.1, 13.2, 14.1, 14.2, 14.3, 14.4, 14.5, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 16.1, 17.2, 24.2, 24.4, 25.3, 25.4, 26.2_
 
-  - [ ]* 5.3 Escrever testes unitários para fluxo de produção
+  - [x] 5.3 Escrever testes unitários para fluxo de produção
     - Criar `tests/unit/test_prod_flow.bats`
     - Testar validação de root (EUID)
     - Testar menu do Supervisor e cópia de arquivos
@@ -170,7 +170,7 @@ Implementação dos scripts de automação do ambiente SUAP, partindo da bibliot
     - Configurar buffers de proxy aumentados
     - _Requisitos: 21.1, 21.2, 21.3, 21.4, 21.5, 21.6, 21.7, 21.8_
 
-  - [ ]* 7.4 Escrever testes de fumaça para configurações estáticas
+  - [x] 7.4 Escrever testes de fumaça para configurações estáticas
     - Criar `tests/smoke/test_nginx_config.bats`
     - Criar `tests/smoke/test_supervisor_confs.bats`
     - Validar presença de diretivas obrigatórias no arquivo `nginx/suap`
@@ -259,7 +259,7 @@ Implementação dos scripts de automação do ambiente SUAP, partindo da bibliot
     - Remover ou deprecar `config-env.sh` (substituído por `setup.sh`)
     - _Requisitos: 1.2, 1.3, 1.4, 1.5, 1.8, 1.9, 3.2_
 
-- [~] 12. Checkpoint final - Verificar integração completa
+- [x] 12. Checkpoint final - Verificar integração completa
   - Garantir que todos os testes passem, perguntar ao usuário se houver dúvidas.
 
 ## Notes
